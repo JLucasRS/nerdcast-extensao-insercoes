@@ -53,7 +53,7 @@ function buildGallery(insertions) {
 
 $(document).ready(function () {
 
-    audio.src = chrome.runtime.getURL("click.mp3");
+    audio.src = chrome.runtime.getURL("assets/sounds/click.mp3");
     getInsertions();
 
 });
