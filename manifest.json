@@ -1,0 +1,17 @@
+{
+  "manifest_version": 2,
+  "name": "Nerdcast Insercoes",
+  "version": "0.1",
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://jovemnerd.com.br/nerdcast/*"
+      ],
+      "js": [ "jquery-3.6.0.min.js", "photoswipe.min.js", "photoswipe-ui-default.min.js", "content.js" ]
+    }
+  ],
+
+  "web_accessible_resources": [ "*.mp3" ]
+}
+
