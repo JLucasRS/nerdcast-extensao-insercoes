@@ -1,0 +1,16 @@
+.show-gallery{
+    display: block;
+}
+
+.hide-gallery{
+    display: none;
+}
+
+#insertions {
+    position:relative; 
+    z-index:0;
+}
+
+.single-podcast .card-custom > .image > img {
+    max-height: none!important;
+}

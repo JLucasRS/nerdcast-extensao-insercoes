@@ -3,7 +3,10 @@ var gallery;
 var showingInsertion = false;
 var currentId = -1;
 var vitrine = document.querySelector(".image img").src;
-var audio = new Audio();
+var audio = new Audio(chrome.runtime.getURL("assets/sounds/click.mp3"));
+var activateInsertions;
+var playSounds;
+var insertionsDiv;
 
 function getInsertions() {
     $.getJSON("https://jovemnerd.com.br/wp-json/jovemnerd/v1/nerdcasts/?id=" +
@@ -15,6 +18,7 @@ function getInsertions() {
             }
         }
     );
+    
 }
 
 function buildGallery(insertions) {
@@ -38,40 +42,38 @@ function buildGallery(insertions) {
         closeElClasses: [], 
     };
 
-    div = $("<div></div>");
-    div.attr("class", "extra-item");
-    div.attr("style", "position:relative; z-index:0");
-    div.append($("<h2>Inserções</h2>"));
-    div.append(pswpElement);
-    $(".content").append(div);
+    insertionsDiv = $("<div></div>");
+    insertionsDiv.addClass("extra-item");
+    insertionsDiv.attr("id", "insertions");
+    insertionsDiv.append($("<h2>Inserções</h2>"));
     pswpElement.classList.add("tns-ovh");
+    insertionsDiv.append(pswpElement);
+    
+    $(".content").append(insertionsDiv);
     
     gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
     gallery.init();
-    checkInsertions();
+    mainChecks();
 }
 
-$(document).ready(function () {
-
-    audio.src = chrome.runtime.getURL("assets/sounds/click.mp3");
-    getInsertions();
-
-});
-
-
-function checkInsertions() {
+function mainChecks() {
     setInterval(function () {
         var currentTime = $("#podcastCurrentTimeText").text().split(':')
         currentTime = (+currentTime[0]) * 60 * 60 + (+currentTime[1]) * 60 + (+currentTime[2]);
         insertions.forEach(function (insertion) {
             if (currentTime >= insertion["start-time"] && currentTime <= insertion["end-time"]) {
                 if (!showingInsertion) {
-                    if (insertion.sound) {
-                        audio.play();
-                    }
-                    document.querySelector(".image img").src = insertion.image;
-                    showingInsertion = true;
-                    currentId = insertion.id;
+                    chrome.storage.sync.get(["useSound", "showInsertions"],
+                    function (options) {
+                        if (options.useSound) {
+                            audio.play()
+                        }
+                        if (options.showInsertions) {
+                            document.querySelector(".image img").src = insertion.image;
+                            showingInsertion = true;
+                            currentId = insertion.id;
+                        }
+                    });
                 }
 
             } else if (showingInsertion && insertion.id == currentId) {
@@ -79,5 +81,29 @@ function checkInsertions() {
                 document.querySelector(".image img").src = vitrine;
             }
         })
+
+        changeGallery();
+
     }, 100);
 }
+
+function changeGallery() {
+    chrome.storage.sync.get(["showGallery"],
+        function (options) {
+            if (options.showGallery) {
+                insertionsDiv.removeClass("hide-gallery");
+                insertionsDiv.addClass("show-gallery");
+            } else {
+                insertionsDiv.removeClass("show-gallery");
+                insertionsDiv.addClass("hide-gallery");
+            }
+        }
+    );
+}
+
+
+$(document).ready(function () {
+
+    getInsertions();
+
+});
