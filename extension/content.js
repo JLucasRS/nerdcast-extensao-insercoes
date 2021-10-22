@@ -73,7 +73,7 @@ function mainChecks() {
                     chrome.storage.sync.get(["useSound", "showInsertions"],
                     function (options) {
                         if (options.useSound) {
-                            audio.play()
+                            audio.play();
                         }
                         if (options.showInsertions) {
                             document.querySelector(".image img").src = insertion.image;
@@ -108,14 +108,6 @@ function changeGallery() {
     );
 }
 
-document.addEventListener("DOMContentLoaded", function (event) {
-    console.log("Até aqui foi");
-    getInsertions();
-
-});
-
 window.onload = function () {
-    console.log("Até aqui foi");
     getInsertions();
-
 }
