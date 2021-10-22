@@ -9,20 +9,27 @@ var playSounds;
 var insertionsDiv;
 
 function getInsertions() {
-    $.getJSON("https://jovemnerd.com.br/wp-json/jovemnerd/v1/nerdcasts/?id=" +
-        $("[rel='shortlink']")[0].href.split("=")[1],
-        function (data) {
-            insertions = data.insertions;
+    var url = "https://jovemnerd.com.br/wp-json/jovemnerd/v1/nerdcasts/?id=" +
+        document.querySelector("[rel='shortlink']").href.split("=")[1];
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url, true);
+    xhr.responseType = 'json';
+    xhr.onload = function () {
+        var status = xhr.status;
+        if (status === 200) {
+            insertions = xhr.response.insertions;
             if (insertions.length > 0) {
                 buildGallery(insertions);
             }
+        } else {
+            console.log("Erro ao acessar a API: " + xhr.response);
         }
-    );
-    
+    };
+    xhr.send(); 
 }
 
 function buildGallery(insertions) {
-    var pswpElement = $('.pswp')[0].cloneNode(true);
+    var pswpElement = document.getElementsByClassName('pswp')[0].cloneNode(true);
     var items = [];
     insertions.forEach(function (insertion, index) {
         insertion.id = index;
@@ -42,14 +49,14 @@ function buildGallery(insertions) {
         closeElClasses: [], 
     };
 
-    insertionsDiv = $("<div></div>");
-    insertionsDiv.addClass("extra-item");
-    insertionsDiv.attr("id", "insertions");
-    insertionsDiv.append($("<h2>Inserções</h2>"));
+    insertionsDiv = document.createElement("div");
+    insertionsDiv.classList.add("extra-item");
+    insertionsDiv.setAttribute("id", "insertions");
+    insertionsDiv.innerHTML = "<h2>Inserções</h2>";
     pswpElement.classList.add("tns-ovh");
-    insertionsDiv.append(pswpElement);
-    
-    $(".content").append(insertionsDiv);
+    insertionsDiv.appendChild(pswpElement);
+
+    document.getElementsByClassName("content")[0].appendChild(insertionsDiv);
     
     gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
     gallery.init();
@@ -58,7 +65,7 @@ function buildGallery(insertions) {
 
 function mainChecks() {
     setInterval(function () {
-        var currentTime = $("#podcastCurrentTimeText").text().split(':')
+        var currentTime = document.getElementById("podcastCurrentTimeText").textContent.split(':')
         currentTime = (+currentTime[0]) * 60 * 60 + (+currentTime[1]) * 60 + (+currentTime[2]);
         insertions.forEach(function (insertion) {
             if (currentTime >= insertion["start-time"] && currentTime <= insertion["end-time"]) {
@@ -91,19 +98,24 @@ function changeGallery() {
     chrome.storage.sync.get(["showGallery"],
         function (options) {
             if (options.showGallery) {
-                insertionsDiv.removeClass("hide-gallery");
-                insertionsDiv.addClass("show-gallery");
+                insertionsDiv.classList.remove("hide-gallery");
+                insertionsDiv.classList.add("show-gallery");
             } else {
-                insertionsDiv.removeClass("show-gallery");
-                insertionsDiv.addClass("hide-gallery");
+                insertionsDiv.classList.remove("show-gallery");
+                insertionsDiv.classList.add("hide-gallery");
             }
         }
     );
 }
 
-
-$(document).ready(function () {
-
+document.addEventListener("DOMContentLoaded", function (event) {
+    console.log("Até aqui foi");
     getInsertions();
 
 });
+
+window.onload = function () {
+    console.log("Até aqui foi");
+    getInsertions();
+
+}

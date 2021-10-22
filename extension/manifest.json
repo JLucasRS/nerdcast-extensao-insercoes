@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Nerdcast Insercoes",
-  "version": "0.2",
+  "version": "0.3",
 
   "content_scripts": [
     {
@@ -9,7 +9,6 @@
         "https://jovemnerd.com.br/nerdcast/*"
       ],
       "js": [
-        "third-party/jquery-3.6.0.min.js",
         "third-party/photoswipe.min.js",
         "third-party/photoswipe-ui-default.min.js",
         "content.js"
@@ -26,8 +25,7 @@
   },
 
   "browser_action": {
-    "default_title": "Manipulate DOM",
-    //"default_icon": "icon.png",
+    "default_title": "Opções",
     "default_popup": "options.html"
   },
 
