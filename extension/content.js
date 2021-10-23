@@ -1,23 +1,26 @@
 var insertions;
+var jumpToTime;
 var gallery;
 var showingInsertion = false;
 var currentId = -1;
-var vitrine = document.querySelector(".image img").src;
+var vitrine = document.querySelector(".image img");
 var audio = new Audio(chrome.runtime.getURL("assets/sounds/click.mp3"));
-var activateInsertions;
-var playSounds;
 var insertionsDiv;
+var skipButton;
 
-function getInsertions() {
+function callApi() {
     var url = "https://jovemnerd.com.br/wp-json/jovemnerd/v1/nerdcasts/?id=" +
         document.querySelector("[rel='shortlink']").href.split("=")[1];
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.responseType = 'json';
     xhr.onload = function () {
-        var status = xhr.status;
-        if (status === 200) {
+        if (xhr.status === 200) {
+            jumpToTime = xhr.response["jump-to-time"];
             insertions = xhr.response.insertions;
+            if (jumpToTime.test != '') {
+                buildSkipButton(jumpToTime);
+            }
             if (insertions.length > 0) {
                 buildGallery(insertions);
             }
@@ -63,37 +66,22 @@ function buildGallery(insertions) {
     mainChecks();
 }
 
-function mainChecks() {
-    setInterval(function () {
-        var currentTime = document.getElementById("podcastCurrentTimeText").textContent.split(':')
-        currentTime = (+currentTime[0]) * 60 * 60 + (+currentTime[1]) * 60 + (+currentTime[2]);
-        insertions.forEach(function (insertion) {
-            if (currentTime >= insertion["start-time"] && currentTime <= insertion["end-time"]) {
-                if (!showingInsertion) {
-                    chrome.storage.sync.get(["useSound", "showInsertions"],
-                    function (options) {
-                        if (options.useSound) {
-                            audio.play();
-                        }
-                        if (options.showInsertions) {
-                            document.querySelector(".image img").src = insertion.image;
-                            showingInsertion = true;
-                            currentId = insertion.id;
-                        }
-                    });
-                }
-
-            } else if (showingInsertion && insertion.id == currentId) {
-                showingInsertion = false;
-                document.querySelector(".image img").src = vitrine;
-            }
-        })
-
-        changeGallery();
-
-    }, 100);
+function buildSkipButton() {
+    var progressBar = document.getElementById("podcastProgressBarInput");
+    skipButton = document.createElement("button");
+    skipButton.setAttribute("id", "skip-button");
+    skipButton.setAttribute("style", "display: none;")
+    skipButton.textContent = "PULAR EMAILS E CANELADAS";
+    document.querySelector(".card-custom .image").setAttribute("style", "display: grid;")
+    document.querySelector(".card-custom .image").appendChild(skipButton);
+    skipButton.onclick = function () {
+        progressBar.value = jumpToTime["end-time"];
+        progressBar.dispatchEvent(new Event('change'));
+    }
 }
 
+// Verifica se as configurações da galeria foram mudadas, já que eu não consigo manipular o DOM
+// direto daquele popup.
 function changeGallery() {
     chrome.storage.sync.get(["showGallery"],
         function (options) {
@@ -108,6 +96,53 @@ function changeGallery() {
     );
 }
 
+function mainChecks() {
+
+    var playerContainer = document.getElementById("podcastPlayerContainer");
+
+    setInterval(function () {
+        var currentTime = document.getElementById("podcastCurrentTimeText").textContent.split(':')
+        currentTime = (+currentTime[0]) * 60 * 60 + (+currentTime[1]) * 60 + (+currentTime[2]);
+        insertions.forEach(function (insertion) {
+            if (currentTime >= insertion["start-time"] && currentTime <= insertion["end-time"]) {
+                if (!showingInsertion) {
+                    chrome.storage.sync.get(["useSound", "showInsertions"],
+                        function (options) {
+                            if (options.useSound) {
+                                audio.play();
+                            }
+                            if (options.showInsertions) {
+                                document.querySelector(".image img").src = insertion.image;
+                                showingInsertion = true;
+                                currentId = insertion.id;
+                            }
+                        });
+                }
+
+            } else if (showingInsertion && insertion.id == currentId) {
+                showingInsertion = false;
+                document.querySelector(".image img").src = vitrine.src;
+            }
+        })
+
+        changeGallery();
+
+        //Evento para pular emails e caneladas. Mas fica disponível desde o início do episódio
+        chrome.storage.sync.get(["skipEmails"], function (options) {      
+            if (options.skipEmails &&
+                playerContainer.getAttribute("style") == "display: block;" &&
+                currentTime <= jumpToTime["end-time"] - 1) {
+                if (skipButton.getAttribute("style") == "display: none;") {
+                    skipButton.setAttribute("style", "display: inherit;");
+                }
+            } else {
+                skipButton.setAttribute("style", "display: none;");
+            }
+        });
+
+    }, 100);
+}
+
 window.onload = function () {
-    getInsertions();
+    callApi();
 }

@@ -14,3 +14,27 @@
 .single-podcast .card-custom > .image > img {
     max-height: none!important;
 }
+
+#skip-button {
+    background: red;
+    padding: 5px;
+    font-size: 25px;
+    border-radius: 5px;
+    color: white;
+    position: absolute;
+    bottom: 15px;
+}
+
+#skip-button:hover {
+    background: #dd0a0a;
+}
+
+.card-custom .image {
+    text-align: center;
+    position: relative;
+    display: grid;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    justify-items: center;
+}
