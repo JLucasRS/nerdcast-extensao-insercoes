@@ -3,6 +3,11 @@
   "name": "Nerdcast Inserções",
   "version": "0.4",
 
+  "background": {
+    "service_worker": "background.js"
+
+  },
+
   "content_scripts": [
     {
       "matches": [
