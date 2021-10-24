@@ -3,7 +3,7 @@ var jumpToTime;
 var gallery;
 var showingInsertion = false;
 var currentId = -1;
-var vitrine = document.querySelector(".image img");
+var vitrine = document.querySelector(".image img").src;
 var audio = new Audio(chrome.runtime.getURL("assets/sounds/click.mp3"));
 var insertionsDiv;
 var skipButton;
@@ -121,7 +121,7 @@ function mainChecks() {
 
             } else if (showingInsertion && insertion.id == currentId) {
                 showingInsertion = false;
-                document.querySelector(".image img").src = vitrine.src;
+                document.querySelector(".image img").src = vitrine;
             }
         })
 
