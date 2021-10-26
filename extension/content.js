@@ -83,7 +83,10 @@ function buildGallery() {
         if (event.target.nodeName == "A" && playerContainer.getAttribute("style") == "display: block;") {
             var timeString = caption.querySelector("a").textContent.split(' e ')[0];
             moveProgressBarTo(convertToSeconds(timeString));
-            vitrine.scrollIntoView();
+            vitrine.scrollIntoView({
+                block: 'end',
+                behavior: 'smooth' 
+            });
         }
     });
     
