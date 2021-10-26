@@ -1,8 +1,8 @@
-.show-gallery{
+.show-element{
     display: block;
 }
 
-.hide-gallery{
+.hide-element{
     display: none;
 }
 
@@ -27,6 +27,7 @@
 
 #skip-button:hover {
     background: #dd0a0a;
+    cursor: pointer;
 }
 
 .card-custom .image {
@@ -37,4 +38,8 @@
     justify-content: center;
     align-items: center;
     justify-items: center;
+}
+
+.pswp__caption a{
+    cursor: pointer;
 }
