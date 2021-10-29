@@ -134,9 +134,9 @@ function mainChecks() {
 
         insertions.forEach(function (insertion) {
             if (currentTime >= insertion["start-time"] && currentTime <= insertion["end-time"]) {
-                if (!showingInsertion) {
-                    chrome.storage.sync.get(["useSound", "showInsertions"],
-                        function (options) {
+                chrome.storage.sync.get(["useSound", "showInsertions"],
+                    function (options) {
+                        if (!showingInsertion) {
                             if (options.useSound) {
                                 audio.play();
                             }
@@ -146,8 +146,8 @@ function mainChecks() {
                                 currentId = insertion.id;
                             }
                         }
-                    );
-                }
+                    }
+                );
 
             } else if (showingInsertion && insertion.id == currentId) {
                 showingInsertion = false;
