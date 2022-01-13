@@ -1,9 +1,7 @@
 var insertions;
 var jumpToTime;
-var gallery;
 var insertionsDiv;
 var skipButton;
-const playerContainer = document.getElementById("podcastPlayerContainer");
 var vitrine = document.querySelector(".image img");
 
 function callApi() {
@@ -17,7 +15,7 @@ function callApi() {
             jumpToTime = xhr.response["jump-to-time"];
             insertions = xhr.response.insertions;
             if (jumpToTime.test != '') {
-                buildSkipButton(jumpToTime);
+                buildSkipButton();
             }
             if (insertions.length > 0) {
                 buildGallery();
@@ -25,8 +23,10 @@ function callApi() {
         } else {
             console.log("Erro ao acessar a API: " + xhr.response);
         }
+
+        mainChecks();
     };
-    xhr.send(); 
+    xhr.send();
 }
 
 //Função que converte uma string "HH:MM:SS" para uma inteiro "segundos"
@@ -40,6 +40,11 @@ function moveProgressBarTo(seconds) {
     var progressBar = document.getElementById("podcastProgressBarInput");
     progressBar.value = seconds;
     progressBar.dispatchEvent(new Event('change'))
+}
+
+
+function playerOpened() {
+    return document.getElementById("podcastPlayerContainer").getAttribute("style") == "display: block;";
 }
 
 function buildGallery() {
@@ -63,7 +68,7 @@ function buildGallery() {
         counterEl: !1,
         shareEl: !1,
         modal: false,
-        closeElClasses: [], 
+        closeElClasses: [],
     };
 
     insertionsDiv = document.createElement("div");
@@ -74,28 +79,28 @@ function buildGallery() {
     insertionsDiv.appendChild(pswpElement);
 
     document.getElementsByClassName("content")[0].appendChild(insertionsDiv);
-    
-    gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
+
+    var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
     gallery.init();
 
     caption = document.querySelectorAll(".pswp__caption")[1];
     caption.addEventListener('click', event => {
-        if (event.target.nodeName == "A" && playerContainer.getAttribute("style") == "display: block;") {
+        if (event.target.nodeName == "A" && playerOpened()) {
             var timeString = caption.querySelector("a").textContent.split(' e ')[0];
             moveProgressBarTo(convertToSeconds(timeString));
             vitrine.scrollIntoView({
                 block: 'end',
-                behavior: 'smooth' 
+                behavior: 'smooth'
             });
         }
     });
-    
+
     mainChecks();
 }
 
 function buildSkipButton() {
     var vitrineCotainer = document.querySelector(".card-custom .image");
-    
+
     skipButton = document.createElement("button");
     skipButton.setAttribute("id", "skip-button");
     skipButton.classList.add("hide-element");
@@ -127,10 +132,17 @@ function mainChecks() {
     var currentId = -1;
     var showingInsertion = false;
     var imagemDaVitrine = vitrine.src;
+    var currentTime = 0;
     const audio = new Audio(chrome.runtime.getURL("assets/sounds/click.mp3"));
 
     setInterval(function () {
-        var currentTime = convertToSeconds(document.getElementById("podcastCurrentTimeText").textContent);
+
+        // Gambiarra pra manter o tempo passando mesmo quando a aba não está focada.
+        if (!document.hidden) {
+            currentTime = convertToSeconds(document.getElementById("podcastCurrentTimeText").textContent);
+        } else if (playerOpened() && document.getElementsByClassName("icon-pause").length > 0) {
+            currentTime = parseFloat((currentTime + 0.2).toFixed(2))
+        }
 
         insertions.forEach(function (insertion) {
             if (currentTime >= insertion["start-time"] && currentTime <= insertion["end-time"]) {
@@ -157,14 +169,10 @@ function mainChecks() {
 
         //Evento para pular emails e caneladas. Mas fica disponível desde o início do episódio
         chrome.storage.sync.get(["skipEmails"],
-            function (options) {      
-                if (options.skipEmails &&
-                    playerContainer.getAttribute("style") == "display: block;" &&
-                    currentTime <= jumpToTime["end-time"] - 1) {
-                    if (skipButton.classList.contains("hide-element")){
-                        skipButton.classList.remove("hide-element");
-                        skipButton.classList.add("show-element");
-                    }
+            function (options) {
+                if (options.skipEmails && playerOpened() && currentTime <= jumpToTime["end-time"] - 1) {
+                    skipButton.classList.remove("hide-element");
+                    skipButton.classList.add("show-element");
                 } else {
                     skipButton.classList.remove("show-element");
                     skipButton.classList.add("hide-element");
@@ -174,10 +182,11 @@ function mainChecks() {
 
         changeGallery();
 
-    }, 100);
+    }, 200);
 }
 
 
 window.onload = function () {
     callApi();
 }
+
