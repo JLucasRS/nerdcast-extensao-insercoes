@@ -94,8 +94,6 @@ function buildGallery() {
             });
         }
     });
-
-    mainChecks();
 }
 
 function buildSkipButton() {
