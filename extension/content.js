@@ -1,5 +1,6 @@
 var insertions;
 var jumpToTime;
+var gallery;
 var insertionsDiv;
 var skipButton;
 var vitrine = document.querySelector(".image img");
@@ -14,6 +15,9 @@ function callApi() {
         if (xhr.status === 200) {
             jumpToTime = xhr.response["jump-to-time"];
             insertions = xhr.response.insertions;
+            insertions.sort(function (first, second) {
+                return first["start-time"] - second["start-time"];
+            });
             if (jumpToTime.test != '') {
                 buildSkipButton();
             }
@@ -36,6 +40,11 @@ function convertToSeconds(time) {
     return seconds;
 }
 
+//Função que converte um inteiro "segundos" para uma string "HH:MM:SS"
+function convertToDateTime(seconds) {
+    return new Date(seconds * 1000).toISOString().substr(11, 8);
+}
+
 function moveProgressBarTo(seconds) {
     var progressBar = document.getElementById("podcastProgressBarInput");
     progressBar.value = seconds;
@@ -47,13 +56,50 @@ function playerOpened() {
     return document.getElementById("podcastPlayerContainer").getAttribute("style") == "display: block;";
 }
 
+function addExtraTime() {
+    insertions.forEach(function (insertion, index) {
+        if (insertions[index - 1] != undefined) {
+            if (insertion["start-time"] - 5 > insertions[index - 1]["end-time"]) {
+                insertion["original-start-time"] = insertion["start-time"];
+                insertion["start-time"] -= 5;
+            }
+        }
+        if (insertions[index + 1] != undefined) {
+            if (insertion["end-time"] + 5 < insertions[index + 1]["start-time"]) {
+                insertion["original-end-time"] = insertion["end-time"];
+                insertion["end-time"] += 5;
+            }
+        }
+        start = convertToDateTime(insertion["start-time"]);
+        end = convertToDateTime(insertion["end-time"]);
+        gallery.items[index].title = `Inserção entre <a>${start} e ${end}.<a/>`
+        gallery.ui.update();
+    });
+}
+
+function removeExtraTime() {
+    insertions.forEach(function (insertion, index) {
+        if (insertion["original-start-time"] != undefined) {
+            insertion["start-time"] = insertion["original-start-time"];
+        }
+        if (insertion["original-end-time"] != undefined) {
+            insertion["end-time"] = insertion["original-end-time"];
+        }
+        start = convertToDateTime(insertion["start-time"]);
+        end = convertToDateTime(insertion["end-time"]);
+        gallery.items[index].title = `Inserção entre <a>${start} e ${end}.<a/>`
+        gallery.ui.update();
+    });
+}
+
 function buildGallery() {
     var pswpElement = document.getElementsByClassName('pswp')[0].cloneNode(true);
     var items = [];
+    
     insertions.forEach(function (insertion, index) {
         insertion.id = index;
-        start = new Date(insertion["start-time"] * 1000).toISOString().substr(11, 8);
-        end = new Date(insertion["end-time"] * 1000).toISOString().substr(11, 8);
+        start = convertToDateTime(insertion["start-time"])
+        end = convertToDateTime(insertion["end-time"])
         items.push({
             src: insertion.image,
             w: 752,
@@ -62,6 +108,7 @@ function buildGallery() {
         });
     });
 
+   
     var options = {
         history: !1,
         mainClass: "pswp--minimal--dark",
@@ -80,7 +127,7 @@ function buildGallery() {
 
     document.getElementsByClassName("content")[0].appendChild(insertionsDiv);
 
-    var gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
+    gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
     gallery.init();
 
     caption = document.querySelectorAll(".pswp__caption")[1];
@@ -132,6 +179,7 @@ function mainChecks() {
     var imagemDaVitrine = vitrine.src;
     var currentTime = 0;
     const audio = new Audio(chrome.runtime.getURL("assets/sounds/click.mp3"));
+    var extraTimeAdded = false;
 
     setInterval(function () {
 
@@ -174,6 +222,22 @@ function mainChecks() {
                 } else {
                     skipButton.classList.remove("show-element");
                     skipButton.classList.add("hide-element");
+                }
+            }
+        );
+
+        chrome.storage.sync.get(["extraTime"],
+            function (options) {
+                if (options.extraTime) {
+                    if (!extraTimeAdded) {
+                        addExtraTime();
+                        extraTimeAdded = true;
+                    }
+                } else {
+                    if (extraTimeAdded) {
+                        removeExtraTime();
+                        extraTimeAdded = false;
+                    }
                 }
             }
         );

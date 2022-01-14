@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Nerdcast Inserções",
-  "version": "0.6",
+  "version": "0.7",
 
   "background": {
     "service_worker": "background.js"

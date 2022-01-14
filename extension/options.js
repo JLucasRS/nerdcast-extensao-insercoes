@@ -3,11 +3,13 @@ function save_options() {
     var sound = document.getElementById('sound').checked;
     var insertions = document.getElementById('insertions').checked;
     var skip = document.getElementById("skip").checked;
+    var extra = document.getElementById("extra").checked;
     chrome.storage.sync.set({
         showGallery: gallery,
         useSound: sound,
         showInsertions: insertions,
-        skipEmails: skip
+        skipEmails: skip,
+        extraTime: extra
     }, function () {
         var status = document.getElementById('status');
             status.textContent = 'Opções salvas.';
@@ -24,11 +26,13 @@ function restore_options() {
         useSound: true,
         showInsertions: true,
         skipEmails: true,
+        extraTime: true
     }, function (items) {
         document.getElementById('gallery').checked = items.showGallery;
         document.getElementById('sound').checked = items.useSound;
         document.getElementById('insertions').checked = items.showInsertions;
         document.getElementById('skip').checked = items.skipEmails;
+        document.getElementById('extra').checked = items.extraTime;
 
     });
 }

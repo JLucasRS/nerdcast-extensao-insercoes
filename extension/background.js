@@ -3,6 +3,7 @@ chrome.runtime.onInstalled.addListener(() => {
         showGallery: true,
         useSound: true,
         showInsertions: true,
-        skipEmails: true
+        skipEmails: true,
+        extraTime: true,
     });
 });
