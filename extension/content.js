@@ -56,40 +56,37 @@ function playerOpened() {
     return document.getElementById("podcastPlayerContainer").getAttribute("style") == "display: block;";
 }
 
-function addExtraTime() {
-    insertions.forEach(function (insertion, index) {
-        if (insertions[index - 1] != undefined) {
-            if (insertion["start-time"] - 5 > insertions[index - 1]["end-time"]) {
-                insertion["original-start-time"] = insertion["start-time"];
-                insertion["start-time"] -= 5;
-            }
-        }
-        if (insertions[index + 1] != undefined) {
-            if (insertion["end-time"] + 5 < insertions[index + 1]["start-time"]) {
-                insertion["original-end-time"] = insertion["end-time"];
-                insertion["end-time"] += 5;
-            }
-        }
-        start = convertToDateTime(insertion["start-time"]);
-        end = convertToDateTime(insertion["end-time"]);
-        gallery.items[index].title = `Inserção entre <a>${start} e ${end}.<a/>`
-        gallery.ui.update();
-    });
-}
 
-function removeExtraTime() {
+function updateInsertionTime(extraTimeAdded) {
     insertions.forEach(function (insertion, index) {
-        if (insertion["original-start-time"] != undefined) {
-            insertion["start-time"] = insertion["original-start-time"];
-        }
-        if (insertion["original-end-time"] != undefined) {
-            insertion["end-time"] = insertion["original-end-time"];
+        if (extraTimeAdded) {
+            if (insertion["original-start-time"] != undefined) {
+                insertion["start-time"] = insertion["original-start-time"];
+            }
+            if (insertion["original-end-time"] != undefined) {
+                insertion["end-time"] = insertion["original-end-time"];
+            }
+
+        } else {
+            if (insertions[index - 1] != undefined) {
+                if (insertion["start-time"] - 5 > insertions[index - 1]["end-time"]) {
+                    insertion["original-start-time"] = insertion["start-time"];
+                    insertion["start-time"] -= 5;
+                }
+            }
+            if (insertions[index + 1] != undefined) {
+                if (insertion["end-time"] + 5 < insertions[index + 1]["start-time"]) {
+                    insertion["original-end-time"] = insertion["end-time"];
+                    insertion["end-time"] += 5;
+                }
+            }
         }
         start = convertToDateTime(insertion["start-time"]);
         end = convertToDateTime(insertion["end-time"]);
-        gallery.items[index].title = `Inserção entre <a>${start} e ${end}.<a/>`
-        gallery.ui.update();
+        gallery.items[index].title = `Inserção entre <a>${start} e ${end}.<a/>`;
     });
+
+    gallery.ui.update();
 }
 
 function buildGallery() {
@@ -108,7 +105,6 @@ function buildGallery() {
         });
     });
 
-   
     var options = {
         history: !1,
         mainClass: "pswp--minimal--dark",
@@ -145,7 +141,6 @@ function buildGallery() {
 
 function buildSkipButton() {
     var vitrineCotainer = document.querySelector(".card-custom .image");
-
     skipButton = document.createElement("button");
     skipButton.setAttribute("id", "skip-button");
     skipButton.classList.add("hide-element");
@@ -199,7 +194,7 @@ function mainChecks() {
                                 audio.play();
                             }
                             if (options.showInsertions) {
-                                document.querySelector(".image img").src = insertion.image;
+                                vitrine.src = insertion.image;
                                 showingInsertion = true;
                                 currentId = insertion.id;
                             }
@@ -209,12 +204,13 @@ function mainChecks() {
 
             } else if (showingInsertion && insertion.id == currentId) {
                 showingInsertion = false;
-                document.querySelector(".image img").src = imagemDaVitrine;
+                vitrine.src = imagemDaVitrine;
             }
         })
 
-        //Evento para pular emails e caneladas. Mas fica disponível desde o início do episódio
-        chrome.storage.sync.get(["skipEmails"],
+        //Botão para pular emails e caneladas. Mas fica disponível desde o início do episódio
+        //Segundo "if" verifica se é necessário adicionar ou remover o tempo extra das inserções
+        chrome.storage.sync.get(["skipEmails", "extraTime"],
             function (options) {
                 if (options.skipEmails && playerOpened() && currentTime <= jumpToTime["end-time"] - 1) {
                     skipButton.classList.remove("hide-element");
@@ -223,19 +219,15 @@ function mainChecks() {
                     skipButton.classList.remove("show-element");
                     skipButton.classList.add("hide-element");
                 }
-            }
-        );
 
-        chrome.storage.sync.get(["extraTime"],
-            function (options) {
                 if (options.extraTime) {
                     if (!extraTimeAdded) {
-                        addExtraTime();
+                        updateInsertionTime(extraTimeAdded);
                         extraTimeAdded = true;
                     }
                 } else {
                     if (extraTimeAdded) {
-                        removeExtraTime();
+                        updateInsertionTime(extraTimeAdded);
                         extraTimeAdded = false;
                     }
                 }
@@ -247,8 +239,6 @@ function mainChecks() {
     }, 200);
 }
 
-
 window.onload = function () {
     callApi();
 }
-
