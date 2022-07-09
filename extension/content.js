@@ -196,6 +196,7 @@ function changeGallery() {
 function mainChecks() {
     var currentId = -1;
     var showingInsertion = false;
+    var playingSound = false;
     var imagemDaVitrine = vitrine.src;
     var currentTime = 0;
     const audio = new Audio(chrome.runtime.getURL("assets/sounds/click.mp3"));
@@ -213,22 +214,22 @@ function mainChecks() {
         insertions.forEach(function (insertion) {
             if (currentTime >= insertion["start-time"] && currentTime <= insertion["end-time"]) {
                 chrome.storage.sync.get(["useSound", "showInsertions"],
-                    function (options) {
-                        if (!showingInsertion) {
-                            if (options.useSound) {
-                                audio.play();
-                            }
-                            if (options.showInsertions) {
-                                vitrine.src = insertion.image;
-                                showingInsertion = true;
-                                currentId = insertion.id;
-                            }
+                    function (options) {  
+                        if (options.useSound && !playingSound) {
+                            audio.play();
+                            playingSound = true;
                         }
+                        if (options.showInsertions && !showingInsertion) {
+                            vitrine.src = insertion.image;
+                            showingInsertion = true;  
+                        } 
                     }
                 );
+                currentId = insertion.id;
 
-            } else if (showingInsertion && insertion.id == currentId) {
+            } else if ((showingInsertion || playingSound) && insertion.id == currentId) {
                 showingInsertion = false;
+                playingSound = false;
                 vitrine.src = imagemDaVitrine;
             }
         })
