@@ -4,6 +4,7 @@ var gallery;
 var insertionsDiv;
 var skipButton;
 var vitrine = document.querySelector(".image img");
+var duration;
 
 function callApi() {
     var url = "https://jovemnerd.com.br/wp-json/jovemnerd/v1/nerdcasts/?id=" +
@@ -14,10 +15,8 @@ function callApi() {
     xhr.onload = function () {
         if (xhr.status === 200) {
             jumpToTime = xhr.response["jump-to-time"];
+            duration = xhr.response["duration"];
             insertions = xhr.response.insertions;
-            insertions.sort(function (first, second) {
-                return first["start-time"] - second["start-time"];
-            });
             if (jumpToTime.test != '') {
                 buildSkipButton();
             }
@@ -51,11 +50,9 @@ function moveProgressBarTo(seconds) {
     progressBar.dispatchEvent(new Event('change'))
 }
 
-
 function playerOpened() {
     return document.getElementById("podcastPlayerContainer").getAttribute("style") == "display: block;";
 }
-
 
 function updateInsertionTime(extraTimeAdded) {
     insertions.forEach(function (insertion, index) {
@@ -68,13 +65,20 @@ function updateInsertionTime(extraTimeAdded) {
             }
 
         } else {
-            if (insertions[index - 1] != undefined) {
+            if (index == 0) {
+                insertion["original-start-time"] = insertion["start-time"];
+                insertion["start-time"] -= 5;
+            } else if (insertions[index - 1] != undefined) {
                 if (insertion["start-time"] - 5 > insertions[index - 1]["end-time"]) {
                     insertion["original-start-time"] = insertion["start-time"];
                     insertion["start-time"] -= 5;
                 }
             }
-            if (insertions[index + 1] != undefined) {
+
+            if (insertions[index + 1] == undefined) {
+                insertion["original-end-time"] = insertion["end-time"];
+                insertion["end-time"] += 5;
+            } else {
                 if (insertion["end-time"] + 5 < insertions[index + 1]["start-time"]) {
                     insertion["original-end-time"] = insertion["end-time"];
                     insertion["end-time"] += 5;
@@ -92,8 +96,28 @@ function updateInsertionTime(extraTimeAdded) {
 function buildGallery() {
     var pswpElement = document.getElementsByClassName('pswp')[0].cloneNode(true);
     var items = [];
+
+    insertions.forEach(function (insertion, index) {
+        //Pros casos em que a inserção tá com a imagem faltando, por algum motivo...
+        if (!insertion.image) {
+            insertions.splice(index, 1);
+            return;
+        }
+
+        //E pros casos em que ela deveria aparecer no final do episódio, e o start e end vem definidos como 0 na API
+        if (insertion["start-time"] == 0 && insertion["end-time"] == 0) {
+            insertion["start-time"] = duration - 1;
+            insertion["end-time"] = duration;
+        }    
+
+    });
+
+    insertions.sort(function (first, second) {
+        return first["start-time"] - second["start-time"];
+    });
     
     insertions.forEach(function (insertion, index) {
+        
         insertion.id = index;
         start = convertToDateTime(insertion["start-time"])
         end = convertToDateTime(insertion["end-time"])
@@ -137,6 +161,7 @@ function buildGallery() {
             });
         }
     });
+    
 }
 
 function buildSkipButton() {

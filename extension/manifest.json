@@ -1,5 +1,5 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Nerdcast Inserções",
   "version": "0.7",
 
@@ -22,14 +22,21 @@
     }
   ],
 
-  "web_accessible_resources": [ "assets/*" ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*"],
+      "matches": [ "*://*/*" ],
+      "extension_ids": [],
+      "use_dynamic_url": true
+    }
+  ],
 
   "options_ui": {
     "page": "options.html",
     "open_in_tab": false
   },
 
-  "browser_action": {
+  "action": {
     "default_title": "Opções",
     "default_popup": "options.html"
   },
@@ -37,5 +44,5 @@
   "permissions": [
     "storage"
   ]
-}
+} 
 
